@@ -5,22 +5,14 @@
 
 class ray {
 public:
-    ray() {}
+    ray();
 
-    ray(const point& origin, const vec3& direction)
-        : orig(origin), dir(direction) {}
+    ray(const point& origin, const vec3& direction);
 
-    const point& origin() const {
-        return orig;
-    }
+    const point& origin() const;
+    const vec3& direction() const;
 
-    const vec3& direction() const {
-        return dir;
-    }
-
-    point at(double t) const {
-        return orig + t * dir;
-    }
+    point at(double t) const;
 
 private:
     point orig;

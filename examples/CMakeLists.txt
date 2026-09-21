@@ -23,3 +23,10 @@ target_link_libraries(test_readPNGFile PNG::PNG)
 target_link_libraries(test_readPNGFile ZLIB::ZLIB)
 
 
+add_executable(rainbow_gradient
+  rainbow_gradient.cpp
+)
+
+target_link_libraries(rainbow_gradient cs4212-util)
+target_link_libraries(rainbow_gradient PNG::PNG)
+target_link_libraries(rainbow_gradient ZLIB::ZLIB)
