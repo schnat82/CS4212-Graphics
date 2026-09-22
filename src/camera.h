@@ -17,9 +17,25 @@ protected:
 
 class PerspectiveCamera : public Camera {
 public:
-    virtual ~PerspectiveCamera() = default;
+    PerspectiveCamera(
+        const point& position,
+        const vec3& viewDirection,
+        double imagePlaneWidth,
+        double imagePlaneHeight,
+        double focalLength,
+        int imageWidth,
+        int imageHeight
+    );
 
-    virtual ray generateRay(int i, int j) override = 0;
+    ray generateRay(int i, int j) override;
+
+private:
+    double planeWidth;
+    double planeHeight;
+    double focalLength;
+
+    int imageWidth;
+    int imageHeight;
 };
 
 #endif

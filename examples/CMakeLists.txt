@@ -30,3 +30,11 @@ add_executable(rainbow_gradient
 target_link_libraries(rainbow_gradient cs4212-util)
 target_link_libraries(rainbow_gradient PNG::PNG)
 target_link_libraries(rainbow_gradient ZLIB::ZLIB)
+
+add_executable(ray_direction
+  ray_direction.cpp
+)
+
+target_link_libraries(ray_direction cs4212-util)
+target_link_libraries(ray_direction PNG::PNG)
+target_link_libraries(ray_direction ZLIB::ZLIB)
