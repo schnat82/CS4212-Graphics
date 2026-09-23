@@ -9,6 +9,7 @@ set(UTESTS
   utest_vec3
   utest_ray
   utest_framebuffer
+  utest_sphere
 )
 
 foreach(uexec ${UTESTS})
