@@ -42,3 +42,12 @@ add_executable(sphere_flag
 target_link_libraries(sphere_flag cs4212-util)
 target_link_libraries(sphere_flag PNG::PNG)
 target_link_libraries(sphere_flag ZLIB::ZLIB)
+
+
+add_executable(multiple_shapes
+  multiple_shapes.cpp
+)
+
+target_link_libraries(multiple_shapes cs4212-util)
+target_link_libraries(multiple_shapes PNG::PNG)
+target_link_libraries(multiple_shapes ZLIB::ZLIB)

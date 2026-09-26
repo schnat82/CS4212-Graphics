@@ -8,7 +8,12 @@ class Sphere : public Shape {
 public:
     Sphere(const point& center, double radius);
 
-    bool intersect(const ray& r) const override;
+    bool intersect(
+        const ray& r,
+        double tMin,
+        double tMax,
+        HitRecord& hit
+    ) const override;
 
     const point& center() const;
     double radius() const;

@@ -7,6 +7,7 @@ add_library (cs4212-util
   camera.cpp camera.h
   shape.h
   sphere.cpp sphere.h
+  triangle.cpp triangle.h
 )
 
 target_compile_definitions(cs4212-util PUBLIC HAS_GLM)

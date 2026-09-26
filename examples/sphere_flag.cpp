@@ -4,6 +4,7 @@
 #include "framebuffer.h"
 #include "png++/png.hpp"
 #include "sphere.h"
+#include <limits>
 
 int main()
 {
@@ -31,7 +32,9 @@ int main()
         for (int x = 0; x < framebuffer.width(); ++x) {
             ray r = camera.generateRay(x, y);
 
-            if (circle.intersect(r)) {
+            HitRecord hit;
+
+        if (circle.intersect(r, 0.001, std::numeric_limits<double>::infinity(), hit )) {
                 framebuffer.setPixel(x, y, circleColor);
             } else {
                 framebuffer.setPixel(x, y, backgroundColor);
