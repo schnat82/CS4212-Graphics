@@ -39,6 +39,8 @@ bool Sphere::intersect(
     hit.t = t;
     hit.p = r.at(t);
     hit.normal = unit_vector(hit.p - sphereCenter);
+    hit.viewDirection = unit_vector(-r.direction());
+    hit.shader = shader;
 
     return true;
 }
