@@ -6,8 +6,11 @@ add_library (cs4212-util
   framebuffer.cpp framebuffer.h
   camera.cpp camera.h
   shape.h
+  shader.h
   sphere.cpp sphere.h
   triangle.cpp triangle.h
+  lambertian_shader.cpp lambertian_shader.h
+  blinn_phong_shader.cpp blinn_phong_shader.h
 )
 
 target_compile_definitions(cs4212-util PUBLIC HAS_GLM)
