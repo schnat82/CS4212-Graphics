@@ -56,3 +56,11 @@ add_executable(shaded_spheres
 target_link_libraries(shaded_spheres cs4212-util)
 target_link_libraries(shaded_spheres PNG::PNG)
 target_link_libraries(shaded_spheres ZLIB::ZLIB)
+
+add_executable(prism_rainbow
+  prism_rainbow.cpp
+)
+
+target_link_libraries(prism_rainbow cs4212-util)
+target_link_libraries(prism_rainbow PNG::PNG)
+target_link_libraries(prism_rainbow ZLIB::ZLIB)

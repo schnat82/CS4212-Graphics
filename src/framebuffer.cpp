@@ -23,6 +23,7 @@ void Framebuffer::setPixel(int x, int y, const vec3& color) {
 vec3 Framebuffer::getPixel(int x, int y) const {
     if (x >= 0 && x < imageWidth && y >= 0 && y < imageHeight) {
         return pixels[y * imageWidth + x];
+
     }
 
     return vec3(0, 0, 0);
