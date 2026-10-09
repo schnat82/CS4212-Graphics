@@ -1,3 +1,4 @@
+
 #include "camera.h"
 
 Camera::Camera()
@@ -24,30 +25,26 @@ PerspectiveCamera::PerspectiveCamera(
 
     origin = position;
 
-    // Camera forward direction.
     W = unit_vector(viewDirection);
 
-    // World up vector.
-    vec3 worldUp(0, 1, 0);
+    const vec3 worldUp(0, 1, 0);
 
-    // Right vector.
     U = unit_vector(cross(W, worldUp));
-
-    // Camera up vector.
     V = unit_vector(cross(U, W));
 }
 
 ray PerspectiveCamera::generateRay(int i, int j) {
+    return generateRay(
+        static_cast<double>(i) + 0.5,
+        static_cast<double>(j) + 0.5
+    );
+}
 
-    // Convert pixel center into coordinates from -0.5 to +0.5.
-    double u =
-        (static_cast<double>(i) + 0.5) / imageWidth - 0.5;
+ray PerspectiveCamera::generateRay(double i, double j) {
+    const double u = i / imageWidth - 0.5;
+    const double v = 0.5 - j / imageHeight;
 
-    double v =
-        0.5 - (static_cast<double>(j) + 0.5) / imageHeight;
-
-    // Move from camera position to corresponding point on image plane.
-    vec3 direction =
+    const vec3 direction =
         focalLength * W
         + (u * planeWidth) * U
         + (v * planeHeight) * V;

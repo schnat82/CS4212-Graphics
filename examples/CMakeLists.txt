@@ -4,71 +4,78 @@
 # utest directory to correctly include the relative reference to the
 # src files.
 #
+
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
-add_executable(test_pngWrite
-  test_pngWrite.cpp
-)
-target_link_libraries(test_pngWrite cs4212-util)
-target_link_libraries(test_pngWrite ${Boost_PROGRAM_OPTIONS_LIBRARIES})
-target_link_libraries(test_pngWrite PNG::PNG)
-target_link_libraries(test_pngWrite ZLIB::ZLIB)
-
-add_executable(test_readPNGFile
-  test_readPNGFile.cpp
-)
-target_link_libraries(test_readPNGFile cs4212-util)
-target_link_libraries(test_readPNGFile ${Boost_PROGRAM_OPTIONS_LIBRARIES})
-target_link_libraries(test_readPNGFile PNG::PNG)
-target_link_libraries(test_readPNGFile ZLIB::ZLIB)
-
-add_executable(rainbow_gradient
-  rainbow_gradient.cpp
-)
-target_link_libraries(rainbow_gradient cs4212-util)
-target_link_libraries(rainbow_gradient PNG::PNG)
-target_link_libraries(rainbow_gradient ZLIB::ZLIB)
-
-add_executable(ray_direction
-  ray_direction.cpp
-)
-target_link_libraries(ray_direction cs4212-util)
-target_link_libraries(ray_direction PNG::PNG)
-target_link_libraries(ray_direction ZLIB::ZLIB)
-
-add_executable(sphere_flag
-  sphere_flag.cpp
-)
-target_link_libraries(sphere_flag cs4212-util)
-target_link_libraries(sphere_flag PNG::PNG)
-target_link_libraries(sphere_flag ZLIB::ZLIB)
-
-add_executable(multiple_shapes
-  multiple_shapes.cpp
-)
-target_link_libraries(multiple_shapes cs4212-util)
-target_link_libraries(multiple_shapes PNG::PNG)
-target_link_libraries(multiple_shapes ZLIB::ZLIB)
-
-add_executable(shaded_spheres
-  shaded_spheres.cpp
-)
-target_link_libraries(shaded_spheres cs4212-util)
-target_link_libraries(shaded_spheres PNG::PNG)
-target_link_libraries(shaded_spheres ZLIB::ZLIB)
-
-add_executable(prism_rainbow
-  prism_rainbow.cpp
+add_executable(
+    test_pngWrite
+    test_pngWrite.cpp
 )
 
-target_link_libraries(prism_rainbow cs4212-util)
-target_link_libraries(prism_rainbow PNG::PNG)
-target_link_libraries(prism_rainbow ZLIB::ZLIB)
-
-add_executable(shadow_scene
-  shadow_scene.cpp
+target_link_libraries(
+    test_pngWrite
+    cs4212-util
+    ${Boost_PROGRAM_OPTIONS_LIBRARIES}
+    PNG::PNG
+    ZLIB::ZLIB
 )
 
-target_link_libraries(shadow_scene cs4212-util)
-target_link_libraries(shadow_scene PNG::PNG)
-target_link_libraries(shadow_scene ZLIB::ZLIB)
+add_executable(
+    test_readPNGFile
+    test_readPNGFile.cpp
+)
+
+target_link_libraries(
+    test_readPNGFile
+    cs4212-util
+    ${Boost_PROGRAM_OPTIONS_LIBRARIES}
+    PNG::PNG
+    ZLIB::ZLIB
+)
+
+foreach(example
+    rainbow_gradient
+    ray_direction
+    sphere_flag
+    multiple_shapes
+    shaded_spheres
+    prism_rainbow
+    shadow_scene
+)
+    add_executable(
+        ${example}
+        ${example}.cpp
+    )
+
+    target_link_libraries(
+        ${example}
+        PRIVATE
+        cs4212-util
+        PNG::PNG
+        ZLIB::ZLIB
+    )
+endforeach()
+
+# New anti-aliasing and mirror renderer.
+add_executable(
+    aa_mirror_scene
+    aa_mirror_scene.cpp
+)
+
+target_link_libraries(
+    aa_mirror_scene
+    PRIVATE
+    cs4212-util
+    PNG::PNG
+    ZLIB::ZLIB
+    Boost::program_options
+)
+
+# Enable parallel row rendering when OpenMP exists.
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(
+        aa_mirror_scene
+        PRIVATE
+        OpenMP::OpenMP_CXX
+    )
+endif()

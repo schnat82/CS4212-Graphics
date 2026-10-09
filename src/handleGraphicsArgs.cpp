@@ -20,94 +20,160 @@
  * along with libsivelab.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+
 #include "handleGraphicsArgs.h"
+
+#include <cstdlib>
+#include <iostream>
 
 using namespace sivelab;
 
 GraphicsArgs::GraphicsArgs()
-  : verbose(false),
-    windowWidth( default_WindowSize ), windowHeight( default_WindowSize ),
-    width( default_WindowSize ), height( default_WindowSize ), 
-    aspectRatio(1.0), useShadow(true),
-    useDepthOfField(false),
-    depthOfFieldDistance(0),
-    numCpus(1), rpp(1), 
-    recursionDepth(4),
-    splitMethod("objectMedian")
+    : verbose(false),
+      windowWidth(default_WindowSize),
+      windowHeight(default_WindowSize),
+      width(100),
+      height(100),
+      aspectRatio(1.0f),
+      useShadow(true),
+      bgColor{0.0f, 0.0f, 0.0f},
+      useDepthOfField(false),
+      depthOfFieldDistance(0.0f),
+      numCpus(1),
+      rpp(1),
+      recursionDepth(4),
+      splitMethod("objectMedian"),
+      withPreview(false),
+      withIntersectTest(false),
+      withGridDim(false),
+      gridDimension(0)
 {
-    bgColor[0] = 0.0f;
-    bgColor[1] = 0.0f;
-    bgColor[2] = 0.0f;
-    
-  reg("help", "help/usage information", ArgumentParsing::NONE, '?');
-  reg("verbose", "turn on verbose output", ArgumentParsing::NONE, 'v');
-  reg("inputfile", "input file name to use", ArgumentParsing::STRING, 'i');
-  reg("outputfile", "output file name to use", ArgumentParsing::STRING, 'o');
-  reg("numcpus", "num of cores to use", ArgumentParsing::INT, 'n');
-  reg("width", "width of output image (default is 100)", ArgumentParsing::INT, 'w');
-  reg("height", "height of output image (default is 100)", ArgumentParsing::INT, 'h');
-  reg("aspect", "aspect ratio in width/height of image (default is 1)", ArgumentParsing::FLOAT, 'a');
-  reg("depth", "depth of field focus distance (default is 0.0 or OFF)", ArgumentParsing::FLOAT, 'd');
-  reg("rpp", "rays per pixel (default is 1)", ArgumentParsing::INT, 'r');
-  reg("recursionDepth", "recursion depth (default is 4)", ArgumentParsing::INT, 'k');
-  reg("split", "split method for bvh construction (default is objectMedian)", ArgumentParsing::STRING, 's');
-  reg("winwidth", "width of window (if using preview)", ArgumentParsing::INT, 'x');
-  reg("winheight", "height of window (if using preview)", ArgumentParsing::INT, 'y');
+    reg("help",
+        "help/usage information",
+        ArgumentParsing::NONE, '?');
+
+    reg("verbose",
+        "turn on verbose output",
+        ArgumentParsing::NONE, 'v');
+
+    reg("inputfile",
+        "input file name to use",
+        ArgumentParsing::STRING, 'i');
+
+    reg("outputfile",
+        "output PNG file name",
+        ArgumentParsing::STRING, 'o');
+
+    reg("numcpus",
+        "number of CPU threads",
+        ArgumentParsing::INT, 'n');
+
+    reg("width",
+        "width of output image (default 100)",
+        ArgumentParsing::INT, 'w');
+
+    reg("height",
+        "height of output image (default 100)",
+        ArgumentParsing::INT, 'h');
+
+    reg("aspect",
+        "aspect ratio of image (width/height)",
+        ArgumentParsing::FLOAT, 'a');
+
+    reg("depth",
+        "depth of field focus distance",
+        ArgumentParsing::FLOAT, 'd');
+
+    reg("rpp",
+        "total rays per pixel (default 1)",
+        ArgumentParsing::INT, 'r');
+
+    reg("recursionDepth",
+        "maximum recursion depth (default 4)",
+        ArgumentParsing::INT, 'k');
+
+    reg("split",
+        "BVH split method (default objectMedian)",
+        ArgumentParsing::STRING, 's');
+
+    reg("winwidth",
+        "preview window width",
+        ArgumentParsing::INT, 'x');
+
+    reg("winheight",
+        "preview window height",
+        ArgumentParsing::INT, 'y');
+
+    reg("with-preview",
+        "enable OpenGL preview",
+        ArgumentParsing::NONE, 'p');
+
+    reg("with-grid-dim",
+        "thread work grid dimension",
+        ArgumentParsing::INT, 'g');
+
+    reg("with-intersect-test",
+        "intersection visualization",
+        ArgumentParsing::NONE, 't');
 }
 
-void GraphicsArgs::process(int argc, char *argv[])
+void GraphicsArgs::process(int argc, char* argv[])
 {
-  processCommandLineArgs(argc, argv);
+    processCommandLineArgs(argc, argv);
 
-  if (isSet("help"))
-    {
-      printUsage();
-      exit(EXIT_SUCCESS);
+    if (isSet("help")) {
+        printUsage();
+        std::exit(EXIT_SUCCESS);
     }
 
-  verbose = isSet("verbose");
-  if (verbose) { std::cout << "Verbose Output: ON" << std::endl; }
-  
-  isSet("width", width);
-  if (verbose) { std::cout << "Setting width to " << width << std::endl; }
-  
-  isSet("height", height);
-  if (verbose) { std::cout << "Setting height to " << height << std::endl; }
+    verbose = isSet("verbose");
 
-  isSet("winwidth", windowWidth);
-  if (verbose) { std::cout << "Setting Window Width to " << windowWidth << std::endl; }
-  
-  isSet("winheight", windowHeight);
-  if (verbose) { std::cout << "Setting Window Height to " << windowHeight << std::endl; }
+    isSet("width", width);
+    isSet("height", height);
 
-  // recalculate aspect ratio in lieu of aspectRatio being set
-  aspectRatio = width / (float)height;  // as in W to H as in 16:9
-  
-  isSet("aspect", aspectRatio);
-  if (verbose) { std::cout << "Setting aspect ratio to " << aspectRatio << std::endl; }
+    isSet("winwidth", windowWidth);
+    isSet("winheight", windowHeight);
 
-  if (isSet("depth", depthOfFieldDistance))
-    {
-      useDepthOfField = true;
-      if (verbose) { std::cout << "Setting depth of field distance to " << depthOfFieldDistance << std::endl; }
+    // Calculate aspect ratio from the image dimensions.
+    if (height > 0) {
+        aspectRatio =
+            static_cast<float>(width) / height;
     }
 
-  isSet("numcpus", numCpus);
-  if (verbose) { std::cout << "Setting num cpus to " << numCpus << std::endl; }
+    // Allow an explicit aspect ratio override.
+    isSet("aspect", aspectRatio);
 
-  isSet("rpp", rpp);
-  if (verbose) { std::cout << "Setting rays per pixel to " << rpp << std::endl; }
+    useDepthOfField =
+        isSet("depth", depthOfFieldDistance);
 
-  isSet("recursionDepth", recursionDepth);
-  if (verbose) { std::cout << "Setting recursionDepth to " << recursionDepth << std::endl; }
-  
-  isSet("split", splitMethod);
-  if (verbose) { std::cout << "Setting split method to " << splitMethod << std::endl; }
+    isSet("numcpus", numCpus);
+    isSet("rpp", rpp);
+    isSet("recursionDepth", recursionDepth);
 
-  isSet("inputfile", inputFileName);
-  if (verbose) { std::cout << "Setting inputFileName to " << inputFileName << std::endl; }
-  
-  isSet("outputfile", outputFileName);
-  if (verbose) { std::cout << "Setting outputFileName to " << outputFileName << std::endl; }
+    isSet("split", splitMethod);
+
+    isSet("inputfile", inputFileName);
+    isSet("outputfile", outputFileName);
+
+    // These options are OFF unless explicitly provided.
+    withPreview = isSet("with-preview");
+
+    withGridDim =
+        isSet("with-grid-dim", gridDimension);
+
+    withIntersectTest =
+        isSet("with-intersect-test");
+
+    if (verbose) {
+        std::cout
+            << "Image dimensions: "
+            << width << " x " << height << '\n'
+            << "Aspect ratio: " << aspectRatio << '\n'
+            << "Rays per pixel: " << rpp << '\n'
+            << "Recursion depth: " << recursionDepth << '\n'
+            << "CPU threads: " << numCpus << '\n'
+            << "Output file: " << outputFileName << '\n'
+            << "OpenGL preview: "
+            << (withPreview ? "ON" : "OFF") << '\n';
+    }
 }
-

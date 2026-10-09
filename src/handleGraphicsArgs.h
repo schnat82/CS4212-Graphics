@@ -21,50 +21,54 @@
  */
 
 #ifndef __SIVELAB_HANDLE_GRAPHICS_ARGS_H__
-#define __SIVELAB_HANDLE_GRAPHICS_ARGS_H__ 1
+#define __SIVELAB_HANDLE_GRAPHICS_ARGS_H__
 
-#include <iostream>
 #include <string>
 
 #include "ArgumentParsing.h"
 
 namespace sivelab {
 
-  // Derived from the Argument parsing class so that each can add to
-  // this argument list.
-  class GraphicsArgs : public ArgumentParsing
-  {
-  public:
+class GraphicsArgs : public ArgumentParsing {
+public:
     GraphicsArgs();
-      ~GraphicsArgs() = default;
+    ~GraphicsArgs() = default;
 
-    void process(int argc, char *argv[]);
+    void process(int argc, char* argv[]);
 
-      const int default_WindowSize = 200;
+    const int default_WindowSize = 200;
 
     bool verbose;
-    int windowWidth, windowHeight;
+
+    int windowWidth;
+    int windowHeight;
+
     int width;
     int height;
+
     float aspectRatio;
+
     bool useShadow;
     float bgColor[3];
-    
+
     bool useDepthOfField;
     float depthOfFieldDistance;
 
     int numCpus;
-
     int rpp;
-
     int recursionDepth;
-    
+
     std::string splitMethod;
-    
     std::string inputFileName;
     std::string outputFileName;
-  };
+
+    bool withPreview;
+    bool withIntersectTest;
+    bool withGridDim;
+
+    int gridDimension;
+};
 
 }
 
-#endif // __HANDLE_ARGS_H__
+#endif

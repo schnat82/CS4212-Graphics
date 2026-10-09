@@ -1,3 +1,4 @@
+
 #ifndef CAMERA_H
 #define CAMERA_H
 
@@ -9,6 +10,7 @@ public:
     virtual ~Camera() = default;
 
     virtual ray generateRay(int i, int j) = 0;
+    virtual ray generateRay(double i, double j) = 0;
 
 protected:
     vec3 U, V, W;
@@ -28,6 +30,7 @@ public:
     );
 
     ray generateRay(int i, int j) override;
+    ray generateRay(double i, double j) override;
 
 private:
     double planeWidth;
