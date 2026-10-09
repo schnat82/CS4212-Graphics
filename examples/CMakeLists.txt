@@ -64,3 +64,11 @@ add_executable(prism_rainbow
 target_link_libraries(prism_rainbow cs4212-util)
 target_link_libraries(prism_rainbow PNG::PNG)
 target_link_libraries(prism_rainbow ZLIB::ZLIB)
+
+add_executable(shadow_scene
+  shadow_scene.cpp
+)
+
+target_link_libraries(shadow_scene cs4212-util)
+target_link_libraries(shadow_scene PNG::PNG)
+target_link_libraries(shadow_scene ZLIB::ZLIB)
