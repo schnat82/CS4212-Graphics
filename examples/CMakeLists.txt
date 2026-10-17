@@ -62,6 +62,11 @@ add_executable(
     aa_mirror_scene.cpp
 )
 
+add_executable(
+    test_scene
+    test_scene.cpp
+)
+
 target_link_libraries(
     aa_mirror_scene
     PRIVATE
