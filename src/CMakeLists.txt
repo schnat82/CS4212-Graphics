@@ -36,6 +36,11 @@ add_library(cs4212-util
     mirror_shader.cpp
     mirror_shader.h
 
+    normal_shader.h
+
+    diffuse_shader.cpp
+    diffuse_shader.h
+
     scene.cpp
     scene.h
 )

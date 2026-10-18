@@ -8,6 +8,11 @@
 
 #include "shape.h"
 
+struct PointLight {
+    point position;
+    vec3 intensity;
+};
+
 class Scene {
 public:
     explicit Scene(
@@ -16,6 +21,13 @@ public:
     );
 
     void add(const std::shared_ptr<Shape>& shape);
+
+    void addLight(
+        const point& position,
+        const vec3& intensity
+    );
+
+    void clearLights();
 
     vec3 computeRayColor(
         const ray& r,
@@ -30,10 +42,15 @@ public:
     ) const;
 
 private:
-    std::vector<std::shared_ptr<Shape>> objects;
+    bool occludedByLight(
+        const point& position,
+        const vec3& normal,
+        const point& light
+    ) const;
 
+    std::vector<std::shared_ptr<Shape>> objects;
+    std::vector<PointLight> lights;
     vec3 backgroundColor;
-    point lightPosition;
 };
 
 #endif

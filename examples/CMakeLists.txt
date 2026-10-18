@@ -56,15 +56,9 @@ foreach(example
     )
 endforeach()
 
-# New anti-aliasing and mirror renderer.
 add_executable(
     aa_mirror_scene
     aa_mirror_scene.cpp
-)
-
-add_executable(
-    test_scene
-    test_scene.cpp
 )
 
 target_link_libraries(
@@ -76,11 +70,28 @@ target_link_libraries(
     Boost::program_options
 )
 
-# Enable parallel row rendering when OpenMP exists.
+add_executable(
+    test_scene
+    test_scene.cpp
+)
+
+target_link_libraries(
+    test_scene
+    PRIVATE
+    cs4212-util
+    PNG::PNG
+    ZLIB::ZLIB
+    Boost::program_options
+)
+
 if(OpenMP_CXX_FOUND)
     target_link_libraries(
         aa_mirror_scene
-        PRIVATE
-        OpenMP::OpenMP_CXX
+        PRIVATE OpenMP::OpenMP_CXX
+    )
+
+    target_link_libraries(
+        test_scene
+        PRIVATE OpenMP::OpenMP_CXX
     )
 endif()

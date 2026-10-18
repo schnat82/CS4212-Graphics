@@ -1,7 +1,7 @@
+
 #include "lambertian_shader.h"
 
 #include <algorithm>
-
 #include "shape.h"
 
 LambertianShader::LambertianShader(
@@ -12,10 +12,21 @@ LambertianShader::LambertianShader(
       lightPosition(lightPosition) {
 }
 
-vec3 LambertianShader::rayColor(const HitRecord& hit) const {
-    vec3 lightDir = unit_vector(lightPosition - hit.p);
+vec3 LambertianShader::rayColor(
+    const HitRecord& hit
+) const {
+    return rayColorAtLight(hit, lightPosition);
+}
 
-    double nDotL = std::max(0.0, dot(hit.normal, lightDir));
+vec3 LambertianShader::rayColorAtLight(
+    const HitRecord& hit,
+    const point& light
+) const {
+    const vec3 lightDir =
+        unit_vector(light - hit.p);
+
+    const double nDotL =
+        std::max(0.0, dot(hit.normal, lightDir));
 
     return kd * nDotL;
 }

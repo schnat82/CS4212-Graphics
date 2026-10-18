@@ -2,25 +2,45 @@
 #include "scene.h"
 #include "shader.h"
 #include "mirror_shader.h"
+#include "lambertian_shader.h"
+#include "blinn_phong_shader.h"
+#include "normal_shader.h"
+#include "diffuse_shader.h"
 
 Scene::Scene(
     const vec3& background,
     const point& light
 )
-    : backgroundColor(background),
-      lightPosition(light) {
+    : backgroundColor(background) {
+    addLight(light, vec3(1, 1, 1));
 }
 
 void Scene::add(const std::shared_ptr<Shape>& shape) {
     objects.push_back(shape);
 }
 
-bool Scene::occluded(
+void Scene::addLight(
     const point& position,
-    const vec3& normal
+    const vec3& intensity
+) {
+    lights.push_back({position, intensity});
+}
+
+void Scene::clearLights() {
+    lights.clear();
+}
+
+bool Scene::occludedByLight(
+    const point& position,
+    const vec3& normal,
+    const point& light
 ) const {
-    const vec3 toLight = lightPosition - position;
+    const vec3 toLight = light - position;
     const double distance = toLight.length();
+
+    if (distance <= 0.001) {
+        return false;
+    }
 
     const ray shadowRay(
         position + 0.001 * normal,
@@ -28,7 +48,7 @@ bool Scene::occluded(
     );
 
     for (const auto& object : objects) {
-        HitRecord hit;
+        HitRecord hit{};
 
         if (object->intersect(
             shadowRay,
@@ -43,13 +63,24 @@ bool Scene::occluded(
     return false;
 }
 
+bool Scene::occluded(
+    const point& position,
+    const vec3& normal
+) const {
+    return !lights.empty() &&
+        occludedByLight(
+            position,
+            normal,
+            lights.front().position
+        );
+}
+
 vec3 Scene::computeRayColor(
     const ray& r,
     double tMin,
     double tMax,
     int depth
 ) const {
-    // Stop rays from bouncing indefinitely.
     if (depth <= 0) {
         return vec3(0, 0, 0);
     }
@@ -58,7 +89,6 @@ vec3 Scene::computeRayColor(
     bool found = false;
     double closestT = tMax;
 
-    // Find the closest shape hit by the ray.
     for (const auto& object : objects) {
         HitRecord candidate{};
 
@@ -72,16 +102,12 @@ vec3 Scene::computeRayColor(
             closestT = candidate.t;
             closestHit = candidate;
 
-            // Some existing shapes, such as Triangle,
-            // do not populate the shader in intersect().
             closestHit.shader = object->getShader();
-
             closestHit.viewDirection =
                 unit_vector(-r.direction());
         }
     }
 
-    // Nothing was hit, so return the background.
     if (!found) {
         return backgroundColor;
     }
@@ -90,11 +116,11 @@ vec3 Scene::computeRayColor(
         return vec3(1, 0, 1);
     }
 
-    // Mirrors generate another ray into the scene.
+    // Recursive mirror reflections
     if (const auto* mirror =
-            dynamic_cast<const MirrorShader*>(
-                closestHit.shader.get()
-            )) {
+        dynamic_cast<const MirrorShader*>(
+            closestHit.shader.get()
+        )) {
         return mirror->rayColor(
             *this,
             r,
@@ -103,14 +129,63 @@ vec3 Scene::computeRayColor(
         );
     }
 
-    // Existing Lambertian and Blinn-Phong materials
-    // retain their direct-lighting behavior.
-    if (occluded(
-        closestHit.p,
-        closestHit.normal
+    // Normal visualization
+    if (dynamic_cast<const NormalShader*>(
+        closestHit.shader.get()
     )) {
-        return vec3(0.025, 0.025, 0.025);
+        return closestHit.shader->rayColor(closestHit);
     }
 
-    return closestHit.shader->rayColor(closestHit);
+    // Diffuse scattering
+    if (const auto* diffuse =
+        dynamic_cast<const DiffuseShader*>(
+            closestHit.shader.get()
+        )) {
+        return diffuse->rayColor(
+            *this,
+            r,
+            closestHit,
+            depth - 1
+        );
+    }
+
+    // Direct lighting from both lights
+    vec3 color(0, 0, 0);
+
+    for (const auto& light : lights) {
+        if (occludedByLight(
+            closestHit.p,
+            closestHit.normal,
+            light.position
+        )) {
+            continue;
+        }
+
+        vec3 contribution(0, 0, 0);
+
+        if (const auto* lambert =
+            dynamic_cast<const LambertianShader*>(
+                closestHit.shader.get()
+            )) {
+            contribution = lambert->rayColorAtLight(
+                closestHit,
+                light.position
+            );
+        } else if (const auto* blinn =
+            dynamic_cast<const BlinnPhongShader*>(
+                closestHit.shader.get()
+            )) {
+            contribution = blinn->rayColorAtLight(
+                closestHit,
+                light.position
+            );
+        } else {
+            contribution =
+                closestHit.shader->rayColor(closestHit);
+        }
+
+        color += contribution * light.intensity;
+    }
+
+    return color;
 }

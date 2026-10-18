@@ -1,3 +1,4 @@
+
 #ifndef BLINN_PHONG_SHADER_H
 #define BLINN_PHONG_SHADER_H
 
@@ -13,6 +14,11 @@ public:
     );
 
     vec3 rayColor(const HitRecord& hit) const override;
+
+    vec3 rayColorAtLight(
+        const HitRecord& hit,
+        const point& light
+    ) const;
 
 private:
     vec3 kd;
