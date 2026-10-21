@@ -43,6 +43,12 @@ add_library(cs4212-util
 
     scene.cpp
     scene.h
+
+    ISceneLoader.h
+    SceneLoader.h
+    SceneParser_JSON.h
+    SceneParser_JSON.cpp
+
 )
 
 target_compile_definitions(
@@ -59,3 +65,5 @@ target_link_libraries(
     cs4212-util
     PUBLIC glm::glm
 )
+
+target_link_libraries(cs4212-util PUBLIC nlohmann_json::nlohmann_json)

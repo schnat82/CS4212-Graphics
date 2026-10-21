@@ -56,6 +56,7 @@ foreach(example
     )
 endforeach()
 
+# Existing anti-aliasing and mirror renderer.
 add_executable(
     aa_mirror_scene
     aa_mirror_scene.cpp
@@ -70,6 +71,7 @@ target_link_libraries(
     Boost::program_options
 )
 
+# Existing custom test scene.
 add_executable(
     test_scene
     test_scene.cpp
@@ -84,6 +86,22 @@ target_link_libraries(
     Boost::program_options
 )
 
+# New 3D optical prism scene.
+add_executable(
+    spectral_prism
+    spectral_prism.cpp
+)
+
+target_link_libraries(
+    spectral_prism
+    PRIVATE
+    cs4212-util
+    PNG::PNG
+    ZLIB::ZLIB
+    Boost::program_options
+)
+
+# Enable OpenMP for parallel row rendering.
 if(OpenMP_CXX_FOUND)
     target_link_libraries(
         aa_mirror_scene
@@ -94,4 +112,22 @@ if(OpenMP_CXX_FOUND)
         test_scene
         PRIVATE OpenMP::OpenMP_CXX
     )
+
+    target_link_libraries(
+        spectral_prism
+        PRIVATE OpenMP::OpenMP_CXX
+    )
 endif()
+
+add_executable(
+    json_scene_renderer
+    json_scene_renderer.cpp
+)
+
+target_link_libraries(
+    json_scene_renderer
+    PRIVATE
+    cs4212-util
+    PNG::PNG
+    ZLIB::ZLIB
+)
