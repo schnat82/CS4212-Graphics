@@ -35,6 +35,11 @@ public:
     void addCamera(const std::string& name, const std::string& type,
                    const vec& pos, const vec& dir, float focal,
                    float planeWidth) override {
+
+
+                    //Change to BVH 
+                    //create bounding hierarchy for n objects in scene
+                    //
         if (lower(type) != "perspective") { unsupported("camera", type); return; }
         if (camera_) throw std::runtime_error("Multiple cameras are not supported");
         camera_ = std::make_unique<PerspectiveCamera>(toVec(pos), toVec(dir),
