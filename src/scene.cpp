@@ -1,5 +1,6 @@
 
 #include "scene.h"
+#include "bvh.h"
 #include "shader.h"
 #include "mirror_shader.h"
 #include "lambertian_shader.h"
@@ -10,13 +11,13 @@
 Scene::Scene(
     const vec3& background,
     const point& light
-)
-    : backgroundColor(background) {
+) : backgroundColor(background) {
     addLight(light, vec3(1, 1, 1));
 }
 
 void Scene::add(const std::shared_ptr<Shape>& shape) {
     objects.push_back(shape);
+    bvhRoot.reset();
 }
 
 void Scene::addLight(
@@ -28,6 +29,47 @@ void Scene::addLight(
 
 void Scene::clearLights() {
     lights.clear();
+}
+
+void Scene::setUseBVH(bool enabled) {
+    useBVH = enabled;
+}
+
+void Scene::buildBVH() {
+    bvhRoot.reset();
+
+    if (!objects.empty()) {
+        bvhRoot = std::make_shared<BVHNode>(objects);
+    }
+}
+
+bool Scene::closestIntersection(
+    const ray& r,
+    double tMin,
+    double tMax,
+    HitRecord& hit
+) const {
+    if (useBVH && bvhRoot) {
+        return bvhRoot->intersect(r, tMin, tMax, hit);
+    }
+
+    bool found = false;
+    double closestT = tMax;
+
+    for (const auto& object : objects) {
+        HitRecord candidate{};
+
+        if (object->intersect(
+            r, tMin, closestT, candidate
+        )) {
+            found = true;
+            closestT = candidate.t;
+            candidate.shader = object->getShader();
+            hit = candidate;
+        }
+    }
+
+    return found;
 }
 
 bool Scene::occludedByLight(
@@ -47,20 +89,14 @@ bool Scene::occludedByLight(
         toLight / distance
     );
 
-    for (const auto& object : objects) {
-        HitRecord hit{};
+    HitRecord hit{};
 
-        if (object->intersect(
-            shadowRay,
-            0.001,
-            distance - 0.001,
-            hit
-        )) {
-            return true;
-        }
-    }
-
-    return false;
+    return closestIntersection(
+        shadowRay,
+        0.001,
+        distance - 0.001,
+        hit
+    );
 }
 
 bool Scene::occluded(
@@ -86,46 +122,27 @@ vec3 Scene::computeRayColor(
     }
 
     HitRecord closestHit{};
-    bool found = false;
-    double closestT = tMax;
 
-    for (const auto& object : objects) {
-        HitRecord candidate{};
-
-        if (object->intersect(
-            r,
-            tMin,
-            closestT,
-            candidate
-        )) {
-            found = true;
-            closestT = candidate.t;
-            closestHit = candidate;
-
-            closestHit.shader = object->getShader();
-            closestHit.viewDirection =
-                unit_vector(-r.direction());
-        }
-    }
-
-    if (!found) {
+    if (!closestIntersection(
+        r, tMin, tMax, closestHit
+    )) {
         return backgroundColor;
     }
+
+    closestHit.viewDirection =
+        unit_vector(-r.direction());
 
     if (!closestHit.shader) {
         return vec3(1, 0, 1);
     }
 
-    // Recursive mirror reflections
+    // Mirror reflections
     if (const auto* mirror =
         dynamic_cast<const MirrorShader*>(
             closestHit.shader.get()
         )) {
         return mirror->rayColor(
-            *this,
-            r,
-            closestHit,
-            depth - 1
+            *this, r, closestHit, depth - 1
         );
     }
 
@@ -142,14 +159,11 @@ vec3 Scene::computeRayColor(
             closestHit.shader.get()
         )) {
         return diffuse->rayColor(
-            *this,
-            r,
-            closestHit,
-            depth - 1
+            *this, r, closestHit, depth - 1
         );
     }
 
-    // Direct lighting from both lights
+    // Direct lighting
     vec3 color(0, 0, 0);
 
     for (const auto& light : lights) {
@@ -168,16 +182,14 @@ vec3 Scene::computeRayColor(
                 closestHit.shader.get()
             )) {
             contribution = lambert->rayColorAtLight(
-                closestHit,
-                light.position
+                closestHit, light.position
             );
         } else if (const auto* blinn =
             dynamic_cast<const BlinnPhongShader*>(
                 closestHit.shader.get()
             )) {
             contribution = blinn->rayColorAtLight(
-                closestHit,
-                light.position
+                closestHit, light.position
             );
         } else {
             contribution =

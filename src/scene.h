@@ -5,7 +5,6 @@
 #include <memory>
 #include <vector>
 #include <limits>
-
 #include "shape.h"
 
 struct PointLight {
@@ -29,6 +28,15 @@ public:
 
     void clearLights();
 
+    void setUseBVH(bool enabled);
+
+    bool usingBVH() const {
+        return useBVH;
+    }
+
+    // Build after adding objects and before rendering.
+    void buildBVH();
+
     vec3 computeRayColor(
         const ray& r,
         double tMin = 0.001,
@@ -42,6 +50,13 @@ public:
     ) const;
 
 private:
+    bool closestIntersection(
+        const ray& r,
+        double tMin,
+        double tMax,
+        HitRecord& hit
+    ) const;
+
     bool occludedByLight(
         const point& position,
         const vec3& normal,
@@ -49,6 +64,9 @@ private:
     ) const;
 
     std::vector<std::shared_ptr<Shape>> objects;
+    std::shared_ptr<Shape> bvhRoot;
+    bool useBVH = true;
+
     std::vector<PointLight> lights;
     vec3 backgroundColor;
 };

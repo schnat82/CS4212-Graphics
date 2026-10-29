@@ -1,9 +1,10 @@
+
 #ifndef SHAPE_H
 #define SHAPE_H
 
 #include <memory>
-
 #include "ray.h"
+#include "aabb.h"
 
 class Shader;
 
@@ -25,6 +26,8 @@ public:
         double tMax,
         HitRecord& hit
     ) const = 0;
+
+    virtual AABB boundingBox() const = 0;
 
     void setShader(std::shared_ptr<Shader> shaderIn) {
         shader = shaderIn;

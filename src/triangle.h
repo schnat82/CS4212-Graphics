@@ -1,7 +1,9 @@
+
 #ifndef TRIANGLE_H
 #define TRIANGLE_H
 
 #include "shape.h"
+#include <algorithm>
 
 class Triangle : public Shape {
 public:
@@ -17,6 +19,27 @@ public:
         double tMax,
         HitRecord& hit
     ) const override;
+
+    AABB boundingBox() const override {
+        point low;
+        point high;
+
+        for (int axis = 0; axis < 3; ++axis) {
+            low[axis] = std::min({
+                vertexA[axis],
+                vertexB[axis],
+                vertexC[axis]
+            }) - 1e-5;
+
+            high[axis] = std::max({
+                vertexA[axis],
+                vertexB[axis],
+                vertexC[axis]
+            }) + 1e-5;
+        }
+
+        return AABB(low, high);
+    }
 
 private:
     point vertexA;

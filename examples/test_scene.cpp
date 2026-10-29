@@ -1,5 +1,5 @@
-
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <iostream>
 #include <limits>
@@ -7,6 +7,7 @@
 #include <random>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 #include "png++/png.hpp"
 #include "camera.h"
@@ -27,24 +28,47 @@
 
 int main(int argc, char** argv) {
     try {
+        bool enableBVH = true;
+
+        // Remove the custom BVH flag before GraphicsArgs
+        // processes the remaining command-line options.
+        std::vector<char*> filteredArgs;
+
+        for (int i = 0; i < argc; ++i) {
+            if (std::string(argv[i]) == "--no-bvh") {
+                enableBVH = false;
+            } else {
+                filteredArgs.push_back(argv[i]);
+            }
+        }
+
+        const auto renderStart =
+            std::chrono::steady_clock::now();
+
         sivelab::GraphicsArgs args;
         args.width = 500;
         args.height = 500;
         args.rpp = 100;
         args.recursionDepth = 5;
-        args.process(argc, argv);
+
+        args.process(
+            static_cast<int>(filteredArgs.size()),
+            filteredArgs.data()
+        );
 
         if (args.width <= 0 || args.height <= 0 ||
             args.rpp <= 0 || args.recursionDepth <= 0 ||
             args.numCpus <= 0) {
-            throw std::invalid_argument("Invalid render settings");
+            throw std::invalid_argument(
+                "Invalid render settings"
+            );
         }
 
         const int width = args.width;
         const int height = args.height;
+
         Framebuffer framebuffer(width, height);
 
-        // Camera
         PerspectiveCamera camera(
             point(0, 3, 3),
             vec3(0, -0.4, -1),
@@ -55,7 +79,6 @@ int main(int argc, char** argv) {
             height
         );
 
-        // Scene and lights
         const point light1(-5, 8, 5);
         const point light2(6, 6, 2);
 
@@ -64,18 +87,21 @@ int main(int argc, char** argv) {
         scene.addLight(light1, vec3(0.7, 0.6, 0.45));
         scene.addLight(light2, vec3(0.35, 0.45, 0.7));
 
-        // Materials
         auto grey = std::make_shared<LambertianShader>(
-            vec3(0.6, 0.6, 0.6), light1);
+            vec3(0.6, 0.6, 0.6), light1
+        );
 
         auto yellow = std::make_shared<LambertianShader>(
-            vec3(0.9, 0.8, 0.1), light1);
+            vec3(0.9, 0.8, 0.1), light1
+        );
 
         auto green = std::make_shared<LambertianShader>(
-            vec3(0.2, 0.8, 0.2), light1);
+            vec3(0.2, 0.8, 0.2), light1
+        );
 
         auto purple = std::make_shared<LambertianShader>(
-            vec3(0.6, 0.2, 0.8), light1);
+            vec3(0.6, 0.2, 0.8), light1
+        );
 
         auto red = std::make_shared<BlinnPhongShader>(
             vec3(0.8, 0.1, 0.1),
@@ -100,17 +126,20 @@ int main(int argc, char** argv) {
 
         auto mirror = std::make_shared<MirrorShader>();
         auto normal = std::make_shared<NormalShader>();
-        auto teal = std::make_shared<DiffuseShader>(
-            vec3(0.2, 0.7, 0.7));
 
-        // Helper functions for adding shapes
+        auto teal = std::make_shared<DiffuseShader>(
+            vec3(0.2, 0.7, 0.7)
+        );
+
         const auto addTriangle = [&](
             const point& a,
             const point& b,
             const point& c,
             const std::shared_ptr<Shader>& material
         ) {
-            auto triangle = std::make_shared<Triangle>(a, b, c);
+            auto triangle =
+                std::make_shared<Triangle>(a, b, c);
+
             triangle->setShader(material);
             scene.add(triangle);
         };
@@ -120,7 +149,9 @@ int main(int argc, char** argv) {
             double radius,
             const std::shared_ptr<Shader>& material
         ) {
-            auto sphere = std::make_shared<Sphere>(center, radius);
+            auto sphere =
+                std::make_shared<Sphere>(center, radius);
+
             sphere->setShader(material);
             scene.add(sphere);
         };
@@ -155,7 +186,7 @@ int main(int argc, char** argv) {
             mirror
         );
 
-        // Floating yellow triangle
+        // Floating triangle
         addTriangle(
             point(0.9, 1.4, -0.6),
             point(1.9, 1.4, -0.6),
@@ -171,18 +202,56 @@ int main(int argc, char** argv) {
         addSphere(point(2, 1, -3), 1.0, mirror);
         addSphere(point(1.5, 0.5, 0.3), 0.5, mirror);
         addSphere(point(-1.3, 0.45, 0.4), 0.45, teal);
-
-        // Sphere behind camera
         addSphere(point(0.3, 1, 5), 1.0, orange);
 
-        // Purple sphere:
-        // Add once its center and radius are provided.
         (void)purple;
+        
+        // Dense scene for BVH performance benchmarking.
+        // 20 x 20 = 400 additional spheres.
+        // Positions are deterministic so BVH ON/OFF
+        // renders use exactly the same geometry.
+        for (int row = 0; row < 20; ++row) {
+            for (int col = 0; col < 20; ++col) {
+                const double x = -3.8 + col * 0.4;
+                const double z = -7.0 - row * 0.4;
+
+                const double height =
+                    0.15 + 0.05 *
+                    std::sin(row * 0.8 + col * 0.5);
+
+                const point center(x, height, z);
+
+                auto sphere = std::make_shared<Sphere>(
+                    center, 0.14
+                );
+
+                if ((row + col) % 2 == 0) {
+                    sphere->setShader(green);
+                } else {
+                    sphere->setShader(blue);
+                }
+
+                scene.add(sphere);
+            }
+        }
+
+
+        // Build BVH before starting parallel rendering.
+        scene.setUseBVH(enableBVH);
+
+        if (enableBVH) {
+            scene.buildBVH();
+        }
+
+        std::cout << "BVH: "
+                  << (enableBVH ? "ON" : "OFF")
+                  << '\n';
 
         // Jittered anti-aliasing
         const int n = static_cast<int>(
             std::sqrt(static_cast<double>(args.rpp))
         );
+
         const bool stratified = n * n == args.rpp;
 
 #ifdef _OPENMP
@@ -200,12 +269,17 @@ int main(int argc, char** argv) {
             };
 
             std::mt19937 generator(seed);
-            std::uniform_real_distribution<double> jitter(0.0, 1.0);
+
+            std::uniform_real_distribution<double>
+                jitter(0.0, 1.0);
 
             for (int x = 0; x < width; ++x) {
                 vec3 accumulated(0, 0, 0);
 
-                for (int sample = 0; sample < args.rpp; ++sample) {
+                for (int sample = 0;
+                     sample < args.rpp;
+                     ++sample) {
+
                     const double dx = stratified
                         ? ((sample % n) + jitter(generator)) / n
                         : jitter(generator);
@@ -232,7 +306,7 @@ int main(int argc, char** argv) {
             }
         }
 
-        // PNG output
+        // Save PNG
         png::image<png::rgb_pixel> image(width, height);
 
         const auto channel = [](double value) -> png::byte {
@@ -253,11 +327,20 @@ int main(int argc, char** argv) {
             }
         }
 
-        const std::string filename = args.outputFileName.empty()
-            ? "test_scene.png"
-            : args.outputFileName;
+        const std::string filename =
+            args.outputFileName.empty()
+                ? "test_scene.png"
+                : args.outputFileName;
 
         image.write(filename);
+
+        const auto renderEnd =
+            std::chrono::steady_clock::now();
+
+        const double elapsed =
+            std::chrono::duration<double>(
+                renderEnd - renderStart
+            ).count();
 
         std::cout << "Wrote " << filename
                   << " (" << width << "x" << height
@@ -265,10 +348,15 @@ int main(int argc, char** argv) {
                   << ", depth " << args.recursionDepth
                   << ")\n";
 
+        std::cout << "Total wall time: "
+                  << elapsed << " seconds\n";
+
         return 0;
 
     } catch (const std::exception& e) {
-        std::cerr << "Render error: " << e.what() << '\n';
+        std::cerr << "Render error: "
+                  << e.what() << '\n';
+
         return 1;
     }
 }
