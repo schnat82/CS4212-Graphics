@@ -1,22 +1,19 @@
-
-# OpenGL Triangle Lab - CS4212
-
+# OpenGL triangle with model, view and projection matrices.
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
-# Create the GLFW example executable.
 add_executable(glfwExample
     glfwExample.cpp
     GLSL.cpp
     GLSL.h
+    OpenGLCamera.h
 )
 
-# Link OpenGL dependencies.
 target_link_libraries(glfwExample PRIVATE
     GLEW::GLEW
     glfw
+    glm::glm
 )
 
-# Platform-specific OpenGL linking.
 if(APPLE)
     target_link_libraries(glfwExample PRIVATE
         "-framework OpenGL"
@@ -25,24 +22,17 @@ if(APPLE)
         "-framework CoreVideo"
     )
 else()
-    target_link_libraries(glfwExample PRIVATE
-        OpenGL::GL
-    )
+    target_link_libraries(glfwExample PRIVATE OpenGL::GL)
 endif()
 
-# Preserve existing project dependencies.
-target_link_libraries(glfwExample PRIVATE
-    PNG::PNG
-    ZLIB::ZLIB
-)
+target_link_libraries(glfwExample PRIVATE PNG::PNG ZLIB::ZLIB)
 
-# Shader files used by the OpenGL program.
 set(SHADER_FILES
     vertexShader_passthrough.glsl
+    vertexShader_withMatrixTransformation.glsl
     fragmentShader_passthrough.glsl
 )
 
-# Automatically copy shaders beside the executable.
 foreach(SHADER_FILE ${SHADER_FILES})
     add_custom_command(
         TARGET glfwExample POST_BUILD
