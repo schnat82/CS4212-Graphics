@@ -1,4 +1,4 @@
-# OpenGL triangle with model, view and projection matrices.
+# OpenGL triangle with Lambertian, Blinn-Phong and normal visualization shaders.
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
 add_executable(glfwExample
@@ -31,6 +31,10 @@ set(SHADER_FILES
     vertexShader_passthrough.glsl
     vertexShader_withMatrixTransformation.glsl
     fragmentShader_passthrough.glsl
+    vertexShader_PrepForPerFragment.glsl
+    fragmentShader_Lambertian.glsl
+    fragmentShader_BlinnPhong.glsl
+    fragmentShader_Normal.glsl
 )
 
 foreach(SHADER_FILE ${SHADER_FILES})
